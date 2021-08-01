@@ -91,6 +91,8 @@ static void c_search_inline(char *query) {
         Position *a = &use[current];
         a->row = atoi(buffer);
         a->column = 0;
+        strtok(buffer, ":");
+        c_echo_status_message("this:%s", buffer);
 
         if (current < MAX_ARRAY_SIZE && current >= 0) {
             current++;

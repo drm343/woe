@@ -1448,7 +1448,7 @@ void init_editor(void) {
 
 
 void load_module(void) {
-    fHandle = dlopen("libp_grep.so", RTLD_NOW);
+    fHandle = dlopen("libplugin-grep.so.1", RTLD_NOW);
 
     if (!fHandle) {
         fprintf(stderr, "%s\n", dlerror());

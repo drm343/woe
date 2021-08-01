@@ -1,0 +1,34 @@
+PACKAGE=woe
+VERSION=0.1.0
+ARCH=`uname -m`
+BUILD=1
+
+FULL_NAME=$(PACKAGE)-$(VERSION)-$(ARCH)-$(BUILD).tgz
+
+
+.PHONY: slackpkg slackpkg-lib slackpkg-ld slackpkg-bin
+
+
+slackpkg: slackpkg-lib slackpkg-ld slackpkg-bin
+	cd build && sudo makepkg -l y -c n ../$(FULL_NAME)
+	rm -r build
+
+
+LIB_D=build/usr/lib64/woe
+slackpkg-lib: libplugin-grep.so.1
+	mkdir -p $(LIB_D)
+	install libplugin-grep.so.1 $(LIB_D)
+	install libplugin-grep.so.1.0.0 $(LIB_D)
+
+
+CONF_D=build/etc/ld.so.conf.d
+slackpkg-ld:
+	mkdir -p $(CONF_D)
+	touch $(CONF_D)/woe.conf
+	echo "/usr/lib64/woe" > $(CONF_D)/woe.conf
+
+
+BIN_D=build/usr/bin
+slackpkg-bin:
+	mkdir -p $(BIN_D)
+	install woe $(BIN_D)
