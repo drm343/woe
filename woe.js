@@ -404,7 +404,12 @@ function editor_mode_number_command(terminal, key) {
             value = 9;
             break;
         case KeyPress('g'):
-            terminal.move_to_line(terminal.number_command);
+            if (terminal.numrows >= terminal.number_command) {
+                terminal.move_to_line(terminal.number_command);
+            }
+            else {
+                terminal.move_to_line(terminal.numrows);
+            }
             terminal.mode = mode.NORMAL;
             terminal.number_command = 0;
             break;
