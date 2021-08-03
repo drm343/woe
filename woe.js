@@ -118,22 +118,27 @@ function editor_move_cursor(terminal, key) {
 
 
 function editor_mode_normal(terminal, key) {
+    let next_function = editor_mode_normal;
+
     if (editor_mode_special_move(terminal, key)) {
-        return true;
+        return [true, next_function];
     }
 
     switch (key) {
         case KeyPress(' '):
             terminal.mode = mode.COMMAND;
+            next_function = editor_mode_command;
             break;
         case KeyPress('i'):
             terminal.mode = mode.INSERT;
+            next_function = editor_mode_insert;
             break;
         case KeyPress('a'):
             if (terminal.check_erow_size()) {
                 terminal.move_cursur_right();
             }
             terminal.mode = mode.INSERT;
+            next_function = editor_mode_insert;
             break;
         case KeyPress('A'):
             if (terminal.check_erow_size()) {
@@ -141,6 +146,7 @@ function editor_mode_normal(terminal, key) {
                 terminal.move_cursur_right();
             }
             terminal.mode = mode.INSERT;
+            next_function = editor_mode_insert;
             break;
         case KeyPress('o'): // english small o
             if (terminal.check_row_object()) {
@@ -149,11 +155,13 @@ function editor_mode_normal(terminal, key) {
             terminal.cx = 0;
             terminal.row_insert(terminal.cy, "", 0);
             terminal.mode = mode.INSERT;
+            next_function = editor_mode_insert;
             break;
         case KeyPress('O'): // english big O
             terminal.cx = 0;
             terminal.row_insert(terminal.cy, "", 0);
             terminal.mode = mode.INSERT;
+            next_function = editor_mode_insert;
             break;
 
         case KeyPress('0'): // number 0
@@ -167,7 +175,7 @@ function editor_mode_normal(terminal, key) {
         case KeyPress('8'):
         case KeyPress('9'):
             terminal.mode = mode.NUMBER_COMMAND;
-            editor_mode_number_command(terminal, key);
+            return editor_mode_number_command(terminal, key);
             break;
 
         case KeyPress('h'):
@@ -230,6 +238,7 @@ function editor_mode_normal(terminal, key) {
             break;
         case KeyPress('X'):
             terminal.delete_char();
+            terminal.fix_position();
             break;
             /*
         case 'n':
@@ -240,18 +249,20 @@ function editor_mode_normal(terminal, key) {
             break;
             */
     }
-    return true;
+    return [true, next_function];
 }
 
 
 function editor_mode_command(terminal, key) {
+    let next_function = editor_mode_normal;
     let run_forever = true;
+
+    terminal.mode = mode.NORMAL;
 
     switch (key) {
         case KeyPress('q'):
             if (terminal.changed) {
                 terminal.echo_status_message("Use <leader>Q force leave");
-                terminal.mode = mode.NORMAL;
             }
             else {
                 terminal.file_close();
@@ -271,13 +282,9 @@ function editor_mode_command(terminal, key) {
             break;
         case KeyPress('s'):
             terminal.file_save();
-            terminal.mode = mode.NORMAL;
-            break;
-        default:
-            terminal.mode = mode.NORMAL;
             break;
     }
-    return run_forever;
+    return [run_forever, next_function];
 }
 
 
@@ -318,8 +325,10 @@ function editor_mode_special_move(terminal, key) {
 
 
 function editor_mode_insert(terminal, key) {
+    let next_function = editor_mode_insert;
+
     if (editor_mode_special_move(terminal, key)) {
-        return true;
+        return [true, next_function];
     }
 
     switch (key) {
@@ -335,6 +344,7 @@ function editor_mode_insert(terminal, key) {
             {
                 terminal.move_cursur_left();
             }
+            next_function = editor_mode_normal;
             break;
         case CTRL_('l'):
         case KeyPress('\x1b'):
@@ -350,20 +360,23 @@ function editor_mode_insert(terminal, key) {
             else {
                 terminal.move_cursur_left();
             }
+            next_function = editor_mode_normal;
             break;
         default:
             terminal.insert_char(key);
             break;
     }
-    return true;
+    return [true, next_function];
 }
 
 
 function editor_mode_number_command(terminal, key) {
+    let next_function = editor_mode_number_command;
+
     if (editor_mode_special_move(terminal, key)) {
         terminal.mode = mode.NORMAL;
         terminal.number_command = 0;
-        return true;
+        return [true, editor_mode_normal];
     }
     let value = 0;
 
@@ -373,6 +386,7 @@ function editor_mode_number_command(terminal, key) {
         case CTRL_('c'):
             terminal.mode = mode.NORMAL;
             terminal.number_command = 0;
+            next_function = editor_mode_normal;
             break;
         case KeyPress('0'):
             break;
@@ -412,41 +426,18 @@ function editor_mode_number_command(terminal, key) {
             }
             terminal.mode = mode.NORMAL;
             terminal.number_command = 0;
+            next_function = editor_mode_normal;
+            terminal.fix_position();
             break;
         default:
             terminal.mode = mode.NORMAL;
             terminal.number_command = 0;
+            next_function = editor_mode_normal;
             break;
     }
 
     terminal.number_command = terminal.number_command * 10 + value;
-    return true;
-}
-
-
-function process_keys(terminal) {
-    let run_forever = true;
-
-    let v = terminal.next_key();
-
-    switch (terminal.mode) {
-        case mode.COMMAND:
-            run_forever = editor_mode_command(terminal, v);
-            break;
-        case mode.NORMAL:
-            run_forever = editor_mode_normal(terminal, v);
-            break;
-        case mode.INSERT:
-            run_forever = editor_mode_insert(terminal, v);
-            break;
-        case mode.NUMBER_COMMAND:
-            run_forever = editor_mode_number_command(terminal, v);
-            break;
-        default:
-            run_forever = false;
-            break;
-    }
-    return run_forever;
+    return [true, next_function];
 }
 
 
@@ -499,6 +490,7 @@ function bar_status(terminal) {
 
 function main() {
     let run_forever = true;
+    let f = editor_mode_normal;
 
     let terminal = new VT100(mode.NORMAL);
     terminal.enable_rawmode();
@@ -510,9 +502,11 @@ function main() {
     terminal.help();
 
     while (run_forever) {
-        let v = bar_status(terminal);
-        terminal.refresh_woe_ui(v);
-        run_forever = process_keys(terminal);
+        let status_message = bar_status(terminal);
+        terminal.refresh_woe_ui(status_message);
+
+        let v = terminal.next_key();
+        [run_forever, f] = f(terminal, v);
     }
     terminal.disable_rawmode();
 }
