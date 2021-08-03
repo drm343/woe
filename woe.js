@@ -240,6 +240,23 @@ function editor_mode_normal(terminal, key) {
             terminal.delete_char();
             terminal.fix_position();
             break;
+
+        case KeyPress('g'):
+            next_function = function(terminal, key) {
+                let run_forever = true;
+                let next_function = editor_mode_normal;
+
+                switch (key) {
+                    case KeyPress('g'):
+                        terminal.move_to_line(1);
+                        break;
+                }
+                return [run_forever, next_function];
+            };
+            break;
+        case KeyPress('G'):
+            terminal.move_to_line(terminal.numrows);
+            break;
             /*
         case 'n':
             terminal.search_next();
