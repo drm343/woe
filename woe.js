@@ -300,6 +300,17 @@ function editor_mode_command(terminal, key) {
         case KeyPress('s'):
             terminal.file_save();
             break;
+        case KeyPress('c'):
+            if (terminal.changed) {
+                terminal.echo_status_message("Use <leader>C force close");
+            }
+            else {
+                terminal.file_close();
+            }
+            break;
+        case KeyPress('C'):
+            terminal.file_close();
+            break;
     }
     return [run_forever, next_function];
 }

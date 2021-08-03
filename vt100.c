@@ -178,6 +178,18 @@ void file_close(struct editor_config *E) {
     }
     free(E->filename);
     E->filename = NULL;
+
+    E->cx              = 0;
+    E->cy              = 0;
+    E->rx              = 0;
+    E->numrows         = 0;
+    E->number_command  = 0;
+    E->row_offset      = 0;
+    E->col_offset      = 0;
+    E->row_obj         = NULL;
+    E->changed         = 0;
+    E->status_msg[0]   = '\0';
+    E->status_msg_time = 0;
 }
 
 
