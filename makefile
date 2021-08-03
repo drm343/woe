@@ -4,10 +4,10 @@ CFLAGS=-I $(INCLUDE) -fPIC -DJS_SHARED_LIBRARY
 JS_CC=qjsc
 
 
-all: woe vt100.so
+all: woe.app vt100.so
 
 
-woe: woe.js
+woe.app: woe.js
 	$(JS_CC) -o $@ $<
 
 
@@ -20,7 +20,7 @@ vt100.pic.o: vt100.c
 
 
 .PHONY: clean test
-clean: woe vt100.so vt100.pic.o
+clean: woe.app vt100.so vt100.pic.o
 	rm $?
 
 
