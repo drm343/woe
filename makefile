@@ -5,10 +5,15 @@ JS_CC=qjsc
 
 
 all: woe.app vt100.so
+release: woe.release.app vt100.so
 
 
 woe.app: woe.js
 	$(JS_CC) -o $@ $<
+
+
+woe.release.app: woe.js
+	$(JS_CC) -flto -o $@ $<
 
 
 vt100.so: vt100.pic.o
