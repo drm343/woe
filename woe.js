@@ -1,5 +1,8 @@
 import * as os from "os";
+import * as std from "std";
+
 import { VT100 } from "./vt100.so";
+import { FileStorage } from 'file_storage.js';
 
 
 function CTRL_(key) {
@@ -42,11 +45,13 @@ let mode = {
     COMMAND:        2,
     INSERT:         3,
     NUMBER_COMMAND: 4,
+    MENU:           5,
     properties: {
         1: {name: "normal", value: 1},
         2: {name: "command", value: 2},
         3: {name: "insert", value: 3},
         4: {name: "number command", value: 4},
+        5: {name: "menu", value: 5},
     }
 };
 
@@ -311,7 +316,70 @@ function editor_mode_command(terminal, key) {
         case KeyPress('C'):
             terminal.file_close();
             break;
+
+        case KeyPress('o'): // english small o
+            if (terminal.changed) {
+                terminal.echo_status_message("Save file or Use <leader>O force open file");
+                break;
+            }
+        case KeyPress('O'): // english big O
+            {
+                let v = terminal.prompt('open: %s');
+                let exists = file_storage.find(x => x == v);
+
+                if (!exists) {
+                    file_storage.push(v);
+                }
+
+                let find_file = std.popen(`find . -name ${v}`, 'r');
+
+                if (find_file.getline()) {
+                    terminal.file_close();
+                    terminal.file_open(v);
+                }
+                else {
+                    terminal.file_close();
+                    terminal.filename = v;
+                    terminal.file_save();
+                }
+            }
+            break;
+        case KeyPress('m'):
+            terminal.mode = mode.MENU;
+            next_function = editor_mode_menu;
+
+            terminal.echo_status_message(file_storage.show());
+            break;
     }
+    return [run_forever, next_function];
+}
+
+
+function editor_mode_menu(terminal, key) {
+    let next_function = editor_mode_normal;
+    let run_forever = true;
+
+    terminal.mode = mode.NORMAL;
+
+    let f = false;
+
+    switch (key) {
+        case KeyPress('1'):
+            f = file_storage.current_files[0];
+            break;
+        case KeyPress('2'):
+            f = file_storage.current_files[1];
+            break;
+        case KeyPress('3'):
+            f = file_storage.current_files[2];
+            break;
+    }
+
+    if (f) {
+        terminal.file_close();
+        terminal.file_open(f.name);
+    }
+    terminal.echo_status_message('');
     return [run_forever, next_function];
 }
 
@@ -539,5 +607,6 @@ function main() {
     terminal.disable_rawmode();
 }
 
+var file_storage = new FileStorage();
 var bar_counter = new Counter();
 main();
