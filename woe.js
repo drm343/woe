@@ -348,7 +348,17 @@ function editor_mode_command(terminal, key) {
             terminal.mode = mode.MENU;
             next_function = editor_mode_menu;
 
-            terminal.echo_status_message(file_storage.show());
+            if (!file_storage.menu) {
+                file_storage.next();
+            }
+
+            if (file_storage.menu) {
+                terminal.echo_status_message(file_storage.menu);
+            }
+            else {
+                terminal.mode = mode.NORMAL;
+                next_function = editor_mode_normal;
+            }
             break;
     }
     return [run_forever, next_function];
@@ -372,6 +382,10 @@ function editor_mode_menu(terminal, key) {
             break;
         case KeyPress('3'):
             f = file_storage.current_files[2];
+            break;
+        case KeyPress('4'):
+            file_storage.next();
+            terminal.echo_status_message(file_storage.menu);
             break;
     }
 
