@@ -3,6 +3,7 @@ import * as std from "std";
 
 import { VT100 } from "./vt100.so";
 import { FileStorage } from 'file_storage.js';
+import { Menu } from 'woe_menu.js';
 
 
 function CTRL_(key) {
@@ -302,63 +303,13 @@ function editor_mode_command(terminal, key) {
         case KeyPress('h'):
             terminal.help();
             break;
-        case KeyPress('s'):
-            terminal.file_save();
-            break;
-        case KeyPress('c'):
-            if (terminal.changed) {
-                terminal.echo_status_message("Use <leader>C force close");
-            }
-            else {
-                terminal.file_close();
-            }
-            break;
-        case KeyPress('C'):
-            terminal.file_close();
             break;
 
-        case KeyPress('o'): // english small o
-            if (terminal.changed) {
-                terminal.echo_status_message("Save file or Use <leader>O force open file");
-                break;
-            }
-        case KeyPress('O'): // english big O
-            {
-                let v = terminal.prompt('open: %s');
-                let exists = file_storage.find(x => x == v);
-
-                if (!exists) {
-                    file_storage.push(v);
-                }
-
-                let find_file = std.popen(`find . -name ${v}`, 'r');
-
-                if (find_file.getline()) {
-                    terminal.file_close();
-                    terminal.file_open(v);
-                }
-                else {
-                    terminal.file_close();
-                    terminal.filename = v;
-                    terminal.file_save();
-                }
-            }
-            break;
         case KeyPress('m'):
             terminal.mode = mode.MENU;
             next_function = editor_mode_menu;
 
-            if (!file_storage.menu) {
-                file_storage.next();
-            }
-
-            if (file_storage.menu) {
-                terminal.echo_status_message(file_storage.menu);
-            }
-            else {
-                terminal.mode = mode.NORMAL;
-                next_function = editor_mode_normal;
-            }
+            terminal.echo_status_message(woe_menu.render());
             break;
     }
     return [run_forever, next_function];
@@ -366,34 +317,73 @@ function editor_mode_command(terminal, key) {
 
 
 function editor_mode_menu(terminal, key) {
-    let next_function = editor_mode_normal;
+    let next_function = editor_mode_menu;
     let run_forever = true;
 
-    terminal.mode = mode.NORMAL;
+    terminal.mode = mode.MENU;
 
-    let f = false;
+    let v;
 
     switch (key) {
         case KeyPress('1'):
-            f = file_storage.current_files[0];
+            v = 1;
             break;
         case KeyPress('2'):
-            f = file_storage.current_files[1];
+            v = 2;
             break;
         case KeyPress('3'):
-            f = file_storage.current_files[2];
+            v = 3;
             break;
         case KeyPress('4'):
-            file_storage.next();
-            terminal.echo_status_message(file_storage.menu);
+            v = 4;
+            break;
+        case KeyPress('5'):
+            v = 5;
+            break;
+        case KeyPress('6'):
+            v = 6;
+            break;
+        case KeyPress('7'):
+            v = 7;
+            break;
+        case KeyPress('8'):
+            v = 8;
+            break;
+        case KeyPress('9'):
+            v = 9;
+            break;
+        case KeyPress('0'):
+            v = 0;
             break;
     }
 
-    if (f) {
-        terminal.file_close();
-        terminal.file_open(f.name);
+    let [next_menu, f] = woe_menu.goto_menu(v);
+
+    if (next_menu) {
+        terminal.echo_status_message(woe_menu.display);
     }
-    terminal.echo_status_message('');
+    else {
+        if (f) {
+            let argv = {
+                editor_mode_normal: editor_mode_normal,
+                editor_mode_menu: editor_mode_menu,
+                editor_mode_command: editor_mode_command,
+                mode: mode,
+                KeyPress: KeyPress,
+                menu: woe_menu,
+            };
+            next_function = f(terminal, file_storage, argv);
+        }
+        else {
+            terminal.echo_status_message("");
+
+            next_function = editor_mode_normal;
+            terminal.mode = mode.NORMAL;
+
+            woe_menu.main();
+        }
+    }
+
     return [run_forever, next_function];
 }
 
@@ -621,6 +611,7 @@ function main() {
     terminal.disable_rawmode();
 }
 
+var woe_menu = new Menu();
 var file_storage = new FileStorage();
 var bar_counter = new Counter();
 main();
