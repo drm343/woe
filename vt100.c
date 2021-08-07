@@ -10,8 +10,6 @@
 #define WOE_VERSION "0.2.0"
 #define WOE_TAB     2
 
-#define HELP_MESSAGE "Help: <leader>q = quit; <leader>h = help; <leader>s = save"
-
 
 enum editor_key {
     BACKSPACE  = 127,
@@ -1519,22 +1517,6 @@ static JSValue js_check_row_object(JSContext *ctx,
 }
 
 
-static JSValue js_help(JSContext *ctx,
-        JSValueConst this_val,
-        int argc, JSValueConst *argv)
-{
-    struct editor_config *s = JS_GetOpaque2(ctx,
-            this_val, js_vt100_class_id);
-
-    if (!s) {
-        return JS_EXCEPTION;
-    }
-
-    c_echo_status_message(s, HELP_MESSAGE, NULL);
-    return JS_UNDEFINED;
-}
-
-
 static JSValue js_erow_get_size(JSContext *ctx,
         JSValueConst this_val,
         int argc, JSValueConst *argv)
@@ -1775,8 +1757,6 @@ static const JSCFunctionListEntry js_vt100_proto_funcs[] = {
 
     JS_CFUNC_DEF("prompt", 1, js_editor_prompt),
     JS_CFUNC_DEF("echo_status_message", 0, js_echo_status_message),
-
-    JS_CFUNC_DEF("help", 0, js_help),
 };
 
 

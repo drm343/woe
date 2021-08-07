@@ -1,19 +1,40 @@
+import * as std from "std";
+
+
+function KeyPress(key) {
+    return key.charCodeAt(0);
+}
+
+
 export function FileStorage() {
     this.files = [];
     this.counter = 0;
     this.current_files = {};
+    this.menu = "";
 }
+
 
 FileStorage.prototype.push = function(v) {
     this.files.push(v);
+    this.counter = 0;
+    this.next();
 }
+
 
 FileStorage.prototype.find = function(f) {
     return this.files.find(f);
 }
 
-FileStorage.prototype.show = function() {
-    let str = ''
+
+FileStorage.prototype.next = function() {
+    let length = this.files.length;
+
+    if (length == 0) {
+        this.menu = "";
+        return;
+    }
+
+    this.menu = "";
 
     for (let i = 0; i < 3; i++) {
         let counter = this.counter + i;
@@ -23,16 +44,77 @@ FileStorage.prototype.show = function() {
             this.current_files[i] = {'name': file_name,
                     'value': counter};
             let c = i + 1;
-            str += `${c}:` + file_name + ' ';
+            this.menu += `${c}:` + file_name + ' ';
         }
     }
-    str += '4: next';
+
+    if (length > 3) {
+        this.menu += '4: next';
+    }
 
     this.counter += 3;
     this.counter = this.counter > this.files.length ? 0 : this.counter;
 
-    if (!str) {
-        return this.show();
+    if (!this.menu) {
+        this.next();
     }
-    return str;
+}
+
+
+FileStorage.prototype.open = function(terminal, key) {
+    switch (key) {
+        case KeyPress('o'): // english small o
+            if (terminal.changed) {
+                terminal.echo_status_message("You need to save file first.");
+                break;
+            }
+        case KeyPress('O'): // english big O
+            {
+                let v = terminal.prompt('open: %s');
+                let exists = this.find(x => x == v);
+
+                if (!exists) {
+                    this.push(v);
+                }
+
+                let find_file = std.popen(`find . -name ${v}`, 'r');
+
+                if (find_file.getline()) {
+                    terminal.file_close();
+                    terminal.file_open(v);
+                }
+                else {
+                    terminal.file_close();
+                    terminal.filename = v;
+                    terminal.file_save();
+                }
+            }
+            break;
+    }
+}
+
+
+FileStorage.prototype.close = function(terminal, key) {
+    switch (key) {
+        case KeyPress('c'):
+            if (terminal.changed) {
+                terminal.echo_status_message("Use <func>C force close");
+            }
+            else {
+                terminal.file_close();
+            }
+            break;
+        case KeyPress('C'):
+            terminal.file_close();
+            break;
+    }
+}
+
+
+FileStorage.prototype.save = function(terminal, key) {
+    switch (key) {
+        case KeyPress('s'):
+            terminal.file_save();
+            break;
+    }
 }
