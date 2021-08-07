@@ -563,8 +563,19 @@ Counter.prototype.length = function (str) {
 
 function bar_status(terminal) {
     let origin_filename = terminal.filename;
-    let filename = origin_filename
-        + ' '.repeat(10 - bar_counter.length(origin_filename));
+
+    let max_repeat_space = 20;
+    let repeat_space     = max_repeat_space;
+
+    if (bar_counter.length(origin_filename) >= max_repeat_space) {
+        repeat_space = 0;
+    }
+    else {
+        repeat_space -= bar_counter.length(origin_filename);
+    }
+
+    let filename = origin_filename.slice(0, max_repeat_space) + ' '.repeat(repeat_space);
+
     let changed = terminal.changed ? "(modified)" : "";
     let right = `${filename} - ${terminal.numrows} lines ${changed}`;
 
@@ -612,6 +623,7 @@ function main() {
     }
     terminal.disable_rawmode();
 }
+
 
 var woe_menu = new Menu();
 var file_storage = new FileStorage();
