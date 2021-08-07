@@ -1,3 +1,6 @@
+import { JSMode } from 'woe-js_mode.js';
+
+
 function render() {
     let menu = this.current;
 
@@ -22,13 +25,15 @@ function render() {
 
 // can not use submenu in main_menu. it will return undefined.
 var main_menu = {
-    FILES:  1,
-    CANCEL: 0,
+    FILES:   1,
+    JS_MODE: 2,
+    CANCEL:  0,
     name: "main_menu",
     main: true,
     properties: {
         0: {name: "Cancel", value: 0, submenu: false, do_job: false},
         1: {name: "Files", value: 1, submenu: false, do_job: false},
+        2: {name: "JS Mode", value: 2, submenu: false, do_job: false},
     },
 };
 
@@ -55,10 +60,25 @@ var files_submenu = {
 };
 
 
+var js_submenu = {
+    ENABLE:   1,
+    EVAL:     2,
+    CANCEL:   0,
+    name: "js_submenu",
+    main: false,
+    properties: {
+        0: {name: "Cancel", value: 0, submenu: main_menu, do_job: false},
+        1: {name: "Enable", value: 1, submenu: false, do_job: js_enable},
+        2: {name: "Eval", value: 2, submenu: false, do_job: js_eval},
+    },
+};
+
+
 export function Menu() {
     this.current = main_menu;
     this.render  = render;
     this.display = "";
+    this.js_mode = new JSMode();
 }
 
 
@@ -75,6 +95,7 @@ Menu.prototype.goto_menu = function (v) {
         let properties = {
             0: {name: "Cancel", value: 0, submenu: false, do_job: false},
             1: {name: "Files", value: 1, submenu: files_submenu, do_job: false},
+            2: {name: "JS Mode", value: 2, submenu: js_submenu, do_job: false},
         };
 
         menu_seleted = properties[v];
@@ -188,4 +209,14 @@ function file_switch(terminal, file_storage, argv) {
         argv.menu.main();
         return [run_forever, next_function];
     };
+}
+
+
+function js_enable(terminal, file_storage, argv) {
+    return argv.menu.js_mode.enable(terminal, file_storage, argv);
+}
+
+
+function js_eval(terminal, file_storage, argv) {
+    return argv.menu.js_mode.eval(terminal, file_storage, argv);
 }

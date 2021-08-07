@@ -3,7 +3,7 @@ CFLAGS=-I $(INCLUDE) -fPIC -DJS_SHARED_LIBRARY
 
 JS_CC=qjsc
 
-DEPENDECY=woe.js file_storage.js woe_menu.js
+DEPENDECY=woe.js file_storage.js woe_menu.js woe-js_mode.js
 
 
 .PHONY: release

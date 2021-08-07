@@ -62,43 +62,56 @@ FileStorage.prototype.next = function() {
 
 
 FileStorage.prototype.open = function(terminal, key) {
+    let is_success = true;
+
     switch (key) {
         case KeyPress('o'): // english small o
             if (terminal.changed) {
                 terminal.echo_status_message("You need to save file first.");
+                is_success = false;
                 break;
             }
         case KeyPress('O'): // english big O
             {
                 let v = terminal.prompt('open: %s');
-                let exists = this.find(x => x == v);
 
-                if (!exists) {
-                    this.push(v);
-                }
+                if (v) {
+                    let exists = this.find(x => x == v);
 
-                let find_file = std.popen(`find . -name ${v}`, 'r');
+                    if (!exists) {
+                        this.push(v);
+                    }
 
-                if (find_file.getline()) {
-                    terminal.file_close();
-                    terminal.file_open(v);
+                    let find_file = std.popen(`find . -name ${v}`, 'r');
+
+                    if (find_file.getline()) {
+                        terminal.file_close();
+                        terminal.file_open(v);
+                    }
+                    else {
+                        terminal.file_close();
+                        terminal.filename = v;
+                        terminal.file_save();
+                    }
                 }
                 else {
-                    terminal.file_close();
-                    terminal.filename = v;
-                    terminal.file_save();
+                    terminal.echo_status_message("Without filename.");
                 }
             }
             break;
     }
+    return is_success;
 }
 
 
 FileStorage.prototype.close = function(terminal, key) {
+    let is_success = true;
+
     switch (key) {
         case KeyPress('c'):
             if (terminal.changed) {
                 terminal.echo_status_message("Use <func>C force close");
+                is_success = false;
             }
             else {
                 terminal.file_close();
@@ -108,13 +121,16 @@ FileStorage.prototype.close = function(terminal, key) {
             terminal.file_close();
             break;
     }
+    return is_success;
 }
 
 
 FileStorage.prototype.save = function(terminal, key) {
+    let is_success = true;
     switch (key) {
         case KeyPress('s'):
             terminal.file_save();
             break;
     }
+    return is_success;
 }

@@ -1,0 +1,3 @@
+let HELP_MESSAGE = "Help: <leader>q = quit; <leader>h = help; <leader>m = open menu";
+terminal.echo = terminal.echo_status_message; 
+terminal.echo_status_message(HELP_MESSAGE);
