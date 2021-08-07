@@ -6,6 +6,9 @@ import { FileStorage } from 'file_storage.js';
 import { Menu } from 'woe_menu.js';
 
 
+let HELP_MESSAGE = "Help: <leader>q = quit; <leader>h = help; <leader>m = open menu";
+
+
 function CTRL_(key) {
     return key.charCodeAt(0) & 0x1f;
 }
@@ -301,8 +304,7 @@ function editor_mode_command(terminal, key) {
             run_forever = false;
             break;
         case KeyPress('h'):
-            terminal.help();
-            break;
+            terminal.echo_status_message(HELP_MESSAGE);
             break;
 
         case KeyPress('m'):
@@ -599,7 +601,7 @@ function main() {
         terminal.file_open(scriptArgs[1]);
     }
 
-    terminal.help();
+    terminal.echo_status_message(HELP_MESSAGE);
 
     while (run_forever) {
         let status_message = bar_status(terminal);
