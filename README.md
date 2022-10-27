@@ -1,4 +1,7 @@
 # woe
+
+Migrate to gitlab. https://gitlab.com/realnami/woe
+
 Write your own editor -> woe!
 
 ## Ref
